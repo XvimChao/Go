@@ -19,4 +19,4 @@ price       REAL NOT NULL           Цена за единицу(кило)
 quantity    INTEGER NOT NULL        Количество на складе
 
 
-
+Антропов Ардан гр.01321
