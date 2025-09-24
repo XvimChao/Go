@@ -20,3 +20,11 @@ quantity    INTEGER NOT NULL        Количество на складе
 
 
 Антропов Ардан гр.01321
+
+
+
+ЧТО СДЕЛАТЬ:
+    jwt token авторизация
+    queries
+    REST CLIENT
+

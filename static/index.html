@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление продуктами питания</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .container { display: flex; gap: 30px; }
+        .products-list { flex: 1; }
+        .product-form { flex: 1; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .btn { padding: 5px 10px; margin: 2px; cursor: pointer; }
+        .delete-btn { background-color: #ff4444; color: white; }
+        .edit-btn { background-color: #44aaff; color: white; }
+        form { display: flex; flex-direction: column; gap: 10px; }
+        input, button { padding: 8px; }
+    </style>
+</head>
+<body>
+    <h1>🍎 Управление продуктами питания</h1>
+    
+    <div class="container">
+        <div class="products-list">
+            <h2>Список продуктов</h2>
+            <button onclick="loadProducts()">Обновить список</button>
+            <div id="productsTable"></div>
+        </div>
+
+        <div class="product-form">
+            <h2>Добавить/Редактировать продукт</h2>
+            <form id="productForm">
+                <input type="hidden" id="productId">
+                <input type="text" id="name" placeholder="Название продукта" required>
+                <input type="text" id="category" placeholder="Категория" required>
+                <input type="number" id="price" placeholder="Цена" step="0.01" required>
+                <input type="number" id="quantity" placeholder="Количество" required>
+                <button type="submit">Сохранить</button>
+                <button type="button" onclick="clearForm()">Очистить</button>
+            </form>
+
+            <h2>Поиск по категории</h2>
+            <input type="text" id="searchCategory" placeholder="Введите категорию">
+            <button onclick="searchByCategory()">Найти</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/products';
+
+        // Загрузка всех продуктов
+        async function loadProducts() {
+            try {
+                const response = await fetch(API_BASE);
+                const products = await response.json();
+                displayProducts(products);
+            } catch (error) {
+                console.error('Ошибка загрузки продуктов:', error);
+            }
+        }
+
+        // Отображение продуктов в таблице
+        function displayProducts(products) {
+            const table = `
+                <table>
+                    <tr>
+                        <th>ID</th>
+                        <th>Название</th>
+                        <th>Категория</th>
+                        <th>Цена</th>
+                        <th>Количество</th>
+                        <th>Действия</th>
+                    </tr>
+                    ${products.map(product => `
+                        <tr>
+                            <td>${product.id}</td>
+                            <td>${product.name}</td>
+                            <td>${product.category}</td>
+                            <td>${product.price} руб.</td>
+                            <td>${product.quantity} шт.</td>
+                            <td>
+                                <button class="btn edit-btn" onclick="editProduct(${product.id})">✏️</button>
+                                <button class="btn delete-btn" onclick="deleteProduct(${product.id})">🗑️</button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </table>
+            `;
+            document.getElementById('productsTable').innerHTML = table;
+        }
+
+        // Создание/обновление продукта
+        document.getElementById('productForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const product = {
+                name: document.getElementById('name').value,
+                category: document.getElementById('category').value,
+                price: parseFloat(document.getElementById('price').value),
+                quantity: parseInt(document.getElementById('quantity').value)
+            };
+
+            const productId = document.getElementById('productId').value;
+            const url = productId ? `${API_BASE}/${productId}` : API_BASE;
+            const method = productId ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(product)
+                });
+
+                if (response.ok) {
+                    clearForm();
+                    loadProducts();
+                    alert('Продукт сохранен успешно!');
+                }
+            } catch (error) {
+                console.error('Ошибка сохранения продукта:', error);
+            }
+        });
+
+        // Редактирование продукта
+        async function editProduct(id) {
+            try {
+                const response = await fetch(`${API_BASE}/${id}`);
+                const product = await response.json();
+                
+                document.getElementById('productId').value = product.id;
+                document.getElementById('name').value = product.name;
+                document.getElementById('category').value = product.category;
+                document.getElementById('price').value = product.price;
+                document.getElementById('quantity').value = product.quantity;
+            } catch (error) {
+                console.error('Ошибка загрузки продукта:', error);
+            }
+        }
+
+        // Удаление продукта
+        async function deleteProduct(id) {
+            if (confirm('Вы уверены, что хотите удалить этот продукт?')) {
+                try {
+                    await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+                    loadProducts();
+                    alert('Продукт удален успешно!');
+                } catch (error) {
+                    console.error('Ошибка удаления продукта:', error);
+                }
+            }
+        }
+
+        // Поиск по категории
+        async function searchByCategory() {
+            const category = document.getElementById('searchCategory').value;
+            if (!category) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/category/${encodeURIComponent(category)}`);
+                const products = await response.json();
+                displayProducts(products);
+            } catch (error) {
+                console.error('Ошибка поиска:', error);
+            }
+        }
+
+        // Очистка формы
+        function clearForm() {
+            document.getElementById('productForm').reset();
+            document.getElementById('productId').value = '';
+        }
+
+        // Загружаем продукты при загрузке страницы
+        loadProducts();
+    </script>
+</body>
+</html>
