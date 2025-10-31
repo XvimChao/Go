@@ -4,95 +4,334 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Управление продуктами питания</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .container { display: flex; gap: 30px; }
-        .products-list { flex: 1; }
-        .product-form { flex: 1; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .btn { padding: 5px 10px; margin: 2px; cursor: pointer; }
-        .delete-btn { background-color: #ff4444; color: white; }
-        .edit-btn { background-color: #44aaff; color: white; }
-        form { display: flex; flex-direction: column; gap: 10px; }
-        input, button { padding: 8px; }
-    </style>
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <h1>🍎 Управление продуктами питания</h1>
-    
+    <!-- Панель авторизации -->
     <div class="container">
-        <div class="products-list">
-            <h2>Список продуктов</h2>
-            <button onclick="loadProducts()">Обновить список</button>
-            <div id="productsTable"></div>
+        <div id="authContainer" class="auth-container">
+            <h1>Управление продуктами питания</h1>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="showLoginForm()">Вход</button>
+                <button class="tab" onclick="showRegisterForm()">Регистрация</button>
+            </div>
+
+            <!-- Форма входа -->
+            <div id="loginForm" class="form active">
+                <form id="loginFormElement">
+                    <div class="form-group">
+                        <label for="loginEmail">Email:</label>
+                        <input type="email" id="loginEmail" required placeholder="Введите ваш email">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Пароль:</label>
+                        <input type="password" id="loginPassword" required placeholder="Введите ваш пароль">
+                    </div>
+                    <button type="submit" class="btn">Войти</button>
+                </form>
+                <div id="loginMessage" class="message"></div>
+            </div>
+
+            <!-- Форма регистрации -->
+            <div id="registerForm" class="form">
+                <form id="registerFormElement">
+                    <div class="form-group">
+                        <label for="registerName">Имя:</label>
+                        <input type="text" id="registerName" required placeholder="Введите ваше имя">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Email:</label>
+                        <input type="email" id="registerEmail" required placeholder="Введите ваш email">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Пароль:</label>
+                        <input type="password" id="registerPassword" required placeholder="Придумайте пароль">
+                    </div>
+                    <button type="submit" class="btn">Зарегистрироваться</button>
+                </form>
+                <div id="registerMessage" class="message"></div>
+            </div>
         </div>
 
-        <div class="product-form">
-            <h2>Добавить/Редактировать продукт</h2>
-            <form id="productForm">
-                <input type="hidden" id="productId">
-                <input type="text" id="name" placeholder="Название продукта" required>
-                <input type="text" id="category" placeholder="Категория" required>
-                <input type="number" id="price" placeholder="Цена" step="0.01" required>
-                <input type="number" id="quantity" placeholder="Количество" required>
-                <button type="submit">Сохранить</button>
-                <button type="button" onclick="clearForm()">Очистить</button>
-            </form>
+        <!-- Панель управления продуктами -->
+        <div id="dashboard" class="dashboard">
+            <div class="header">
+                <h1>Управление продуктами питания</h1>
+                <div class="user-info">
+                    <div>
+                        <strong id="userNameDisplay"></strong>
+                        <span id="userStatusDisplay" class="user-badge"></span>
+                    </div>
+                    <button class="btn logout-btn" onclick="logout()">Выйти</button>
+                </div>
+            </div>
 
-            <h2>Поиск по категории</h2>
-            <input type="text" id="searchCategory" placeholder="Введите категорию">
-            <button onclick="searchByCategory()">Найти</button>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalProducts">0</div>
+                    <div class="stat-label">Всего продуктов</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalCategories">0</div>
+                    <div class="stat-label">Категорий</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalQuantity">0</div>
+                    <div class="stat-label">Общее количество</div>
+                </div>
+            </div>
+
+            <div id="contentContainer" class="content">
+                <!-- Левая часть - список продуктов (для всех) -->
+                <div class="products-section">
+                    <h2>Список продуктов</h2>
+                    <button class="btn" onclick="loadProducts()">Обновить список</button>
+                    
+                    <div class="search-section">
+                        <h3>Поиск по категории</h3>
+                        <div class="search-form">
+                            <input type="text" id="searchCategory" placeholder="Введите категорию">
+                            <button class="btn" onclick="searchByCategory()">Найти</button>
+                            <button class="btn" onclick="loadProducts()">Показать все</button>
+                        </div>
+                    </div>
+
+                    <div id="productsTable"></div>
+                </div>
+
+                <!-- Правая часть - форма (только для админов) -->
+                <div id="formSection" class="form-section admin-only">
+                    <h2 id="formTitle">Добавить продукт</h2>
+                    <form id="productForm">
+                        <input type="hidden" id="productId">
+                        <div class="form-group">
+                            <label for="name">Название:</label>
+                            <input type="text" id="name" placeholder="Название продукта" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="category">Категория:</label>
+                            <input type="text" id="category" placeholder="Категория" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="price">Цена (руб.):</label>
+                            <input type="number" id="price" placeholder="Цена" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="quantity">Количество:</label>
+                            <input type="number" id="quantity" placeholder="Количество" required>
+                        </div>
+                        <button type="submit" class="btn">Сохранить</button>
+                        <button type="button" class="btn" onclick="clearForm()" style="background: #6c757d;">Очистить</button>
+                    </form>
+
+                    <div id="formMessage" class="message" style="margin-top: 15px;"></div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
+        let currentToken = '';
+        let currentUser = null;
         const API_BASE = '/api/products';
 
-        // Загрузка всех продуктов
+        // Функции авторизации
+        function showLoginForm() {
+            document.getElementById('loginForm').classList.add('active');
+            document.getElementById('registerForm').classList.remove('active');
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            document.querySelectorAll('.tab')[1].classList.remove('active');
+        }
+
+        function showRegisterForm() {
+            document.getElementById('registerForm').classList.add('active');
+            document.getElementById('loginForm').classList.remove('active');
+            document.querySelectorAll('.tab')[1].classList.add('active');
+            document.querySelectorAll('.tab')[0].classList.remove('active');
+        }
+
+        // Обработка входа
+        document.getElementById('loginFormElement').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const messageEl = document.getElementById('loginMessage');
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentToken = data.token;
+                    currentUser = { name: data.name, email: data.email, status: data.status };
+                    showDashboard();
+                    showMessage(messageEl, 'Вход выполнен успешно!', 'success');
+                } else {
+                    showMessage(messageEl, data.error || 'Ошибка входа', 'error');
+                }
+            } catch (error) {
+                showMessage(messageEl, 'Ошибка подключения к серверу', 'error');
+            }
+        });
+
+        
+        // Обработка регистрации
+        document.getElementById('registerFormElement').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const messageEl = document.getElementById('registerMessage');
+
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        name: name, 
+                        email: email, 
+                        password: password,
+                        status: "user"
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentToken = data.token;
+                    currentUser = { name: data.name, email: data.email, status: data.status };
+                    showDashboard();
+                    showMessage(messageEl, 'Регистрация выполнена успешно!', 'success');
+                } else {
+                    showMessage(messageEl, data.error || 'Ошибка регистрации', 'error');
+                }
+            } catch (error) {
+                showMessage(messageEl, 'Ошибка подключения к серверу', 'error');
+            }
+        })
+
+        // Показать панель управления
+        function showDashboard() {
+            document.getElementById('authContainer').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            
+            document.getElementById('userNameDisplay').textContent = currentUser.name;
+            const statusBadge = document.getElementById('userStatusDisplay');
+            statusBadge.textContent = currentUser.status;
+            statusBadge.classList.add(currentUser.status);
+            
+            // Настроить интерфейс в зависимости от роли
+            setupUserInterface();
+            loadProducts();
+        }
+
+        // Настройка интерфейса по роли
+        function setupUserInterface() {
+            const isAdmin = currentUser.status === 'admin';
+            const contentContainer = document.getElementById('contentContainer');
+            const formSection = document.getElementById('formSection');
+            const viewOnlyMessage = document.getElementById('viewOnlyMessage');
+
+            if (isAdmin) {
+                // Админ: показываем форму и используем две колонки
+                contentContainer.className = 'content admin-layout';
+                formSection.style.display = 'block';
+                viewOnlyMessage.style.display = 'none';
+            } else {
+                // Обычный пользователь: скрываем форму, используем одну колонку
+                contentContainer.className = 'content user-layout';
+                formSection.style.display = 'none';
+                viewOnlyMessage.style.display = 'block';
+            }
+        }
+
+        // Выход из системы
+        function logout() {
+            currentToken = '';
+            currentUser = null;
+            
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('authContainer').style.display = 'block';
+            document.getElementById('loginFormElement').reset();
+            document.getElementById('registerFormElement').reset();
+            
+            showLoginForm();
+        }
+
+        // Функции управления продуктами
         async function loadProducts() {
             try {
                 const response = await fetch(API_BASE);
                 const products = await response.json();
                 displayProducts(products);
+                updateStats(products);
             } catch (error) {
                 console.error('Ошибка загрузки продуктов:', error);
             }
         }
 
-        // Отображение продуктов в таблице
         function displayProducts(products) {
+            if (products.length === 0) {
+                document.getElementById('productsTable').innerHTML = '<p>Нет продуктов для отображения</p>';
+                return;
+            }
+
+            const isAdmin = currentUser.status === 'admin';
+            
             const table = `
                 <table>
-                    <tr>
-                        <th>ID</th>
-                        <th>Название</th>
-                        <th>Категория</th>
-                        <th>Цена</th>
-                        <th>Количество</th>
-                        <th>Действия</th>
-                    </tr>
-                    ${products.map(product => `
+                    <thead>
                         <tr>
-                            <td>${product.id}</td>
-                            <td>${product.name}</td>
-                            <td>${product.category}</td>
-                            <td>${product.price} руб.</td>
-                            <td>${product.quantity} шт.</td>
-                            <td>
-                                <button class="btn edit-btn" onclick="editProduct(${product.id})">✏️</button>
-                                <button class="btn delete-btn" onclick="deleteProduct(${product.id})">🗑️</button>
-                            </td>
+                            <th>ID</th>
+                            <th>Название</th>
+                            <th>Категория</th>
+                            <th>Цена</th>
+                            <th>Количество</th>
+                            ${isAdmin ? '<th>Действия</th>' : ''}
                         </tr>
-                    `).join('')}
+                    </thead>
+                    <tbody>
+                        ${products.map(product => `
+                            <tr>
+                                <td>${product.id}</td>
+                                <td>${product.name}</td>
+                                <td>${product.category}</td>
+                                <td>${product.price} руб.</td>
+                                <td>${product.quantity} шт.</td>
+                                ${isAdmin ? `
+                                    <td>
+                                        <button class="action-btn edit-btn" onclick="editProduct(${product.id})">Редактировать</button>
+                                        <button class="action-btn delete-btn" onclick="deleteProduct(${product.id})">Удалить</button>
+                                    </td>
+                                ` : ''}
+                            </tr>
+                        `).join('')}
+                    </tbody>
                 </table>
             `;
             document.getElementById('productsTable').innerHTML = table;
         }
 
-        // Создание/обновление продукта
-        document.getElementById('productForm').addEventListener('submit', async function(e) {
+        function updateStats(products) {
+            const totalProducts = products.length;
+            const categories = [...new Set(products.map(p => p.category))];
+            const totalQuantity = products.reduce((sum, product) => sum + product.quantity, 0);
+
+            document.getElementById('totalProducts').textContent = totalProducts;
+            document.getElementById('totalCategories').textContent = categories.length;
+            document.getElementById('totalQuantity').textContent = totalQuantity;
+        }
+
+        // Обработка формы продукта (только для админов)
+        document.getElementById('productForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const product = {
@@ -109,50 +348,91 @@
             try {
                 const response = await fetch(url, {
                     method: method,
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
                     body: JSON.stringify(product)
                 });
 
                 if (response.ok) {
                     clearForm();
                     loadProducts();
-                    alert('Продукт сохранен успешно!');
+                    showFormMessage('Продукт сохранен успешно!', 'success');
+                } else {
+                    showFormMessage('Ошибка сохранения продукта', 'error');
                 }
             } catch (error) {
-                console.error('Ошибка сохранения продукта:', error);
+                showFormMessage('Ошибка подключения к серверу', 'error');
             }
         });
 
         // Редактирование продукта
         async function editProduct(id) {
+            if (currentUser.status !== 'admin') {
+                showFormMessage('Только администраторы могут редактировать продукты', 'error');
+                return;
+            }
+
             try {
-                const response = await fetch(`${API_BASE}/${id}`);
-                const product = await response.json();
+                console.log('Loading product with ID:', id);
                 
+                const url = `${API_BASE}/${id}`;
+                console.log('Request URL:', url);
+                
+                const response = await fetch(url);
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    throw new Error(`Ошибка сервера: ${response.status} - ${errorText}`);
+                }
+                
+                const product = await response.json();
+                console.log('Loaded product:', product);
+                
+                // Заполняем форму данными продукта
                 document.getElementById('productId').value = product.id;
                 document.getElementById('name').value = product.name;
                 document.getElementById('category').value = product.category;
                 document.getElementById('price').value = product.price;
                 document.getElementById('quantity').value = product.quantity;
+                
+                document.getElementById('formTitle').textContent = 'Редактировать продукт';
+                showFormMessage('Продукт загружен для редактирования', 'success');
+                
+                // Прокрутить к форме
+                document.getElementById('formSection').scrollIntoView({ behavior: 'smooth' });
+                
             } catch (error) {
                 console.error('Ошибка загрузки продукта:', error);
+                showFormMessage('Ошибка загрузки продукта: ' + error.message, 'error');
             }
         }
-
-        // Удаление продукта
+        
         async function deleteProduct(id) {
             if (confirm('Вы уверены, что хотите удалить этот продукт?')) {
                 try {
-                    await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
-                    loadProducts();
-                    alert('Продукт удален успешно!');
+                    const response = await fetch(`${API_BASE}/${id}`, { 
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${currentToken}` }
+                    });
+
+                    if (response.ok) {
+                        loadProducts();
+                        showFormMessage('Продукт удален успешно!', 'success');
+                    } else {
+                        showFormMessage('Ошибка удаления продукта', 'error');
+                    }
                 } catch (error) {
-                    console.error('Ошибка удаления продукта:', error);
+                    showFormMessage('Ошибка подключения к серверу', 'error');
                 }
             }
         }
 
-        // Поиск по категории
         async function searchByCategory() {
             const category = document.getElementById('searchCategory').value;
             if (!category) return;
@@ -161,19 +441,65 @@
                 const response = await fetch(`${API_BASE}/category/${encodeURIComponent(category)}`);
                 const products = await response.json();
                 displayProducts(products);
+                updateStats(products);
             } catch (error) {
                 console.error('Ошибка поиска:', error);
             }
         }
 
-        // Очистка формы
         function clearForm() {
             document.getElementById('productForm').reset();
             document.getElementById('productId').value = '';
+            document.getElementById('formTitle').textContent = 'Добавить продукт';
+            document.getElementById('formMessage').style.display = 'none';
         }
 
-        // Загружаем продукты при загрузке страницы
-        loadProducts();
+        function showMessage(element, message, type) {
+            element.textContent = message;
+            element.className = 'message ' + type;
+            element.style.display = 'block';
+            
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 5000);
+        }
+
+        function showFormMessage(message, type) {
+            const element = document.getElementById('formMessage');
+            showMessage(element, message, type);
+        }
+
+        // Проверить сохраненную авторизацию при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedToken = localStorage.getItem('auth_token');
+            const savedUser = localStorage.getItem('user_data');
+            
+            if (savedToken && savedUser) {
+                try {
+                    currentToken = savedToken;
+                    currentUser = JSON.parse(savedUser);
+                    showDashboard();
+                } catch (e) {
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('user_data');
+                }
+            }
+        });
+
+        // Сохранить данные авторизации
+        function saveAuthData() {
+            if (currentToken && currentUser) {
+                localStorage.setItem('auth_token', currentToken);
+                localStorage.setItem('user_data', JSON.stringify(currentUser));
+            }
+        }
+
+        // Обновить showDashboard для сохранения данных
+        const originalShowDashboard = showDashboard;
+        showDashboard = function() {
+            originalShowDashboard();
+            saveAuthData();
+        };
     </script>
 </body>
 </html>

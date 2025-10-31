@@ -1,0 +1,11 @@
+POST http://localhost:8080/api/login HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+    "email":"user@mail.ru",
+    "password":"user123"
+}
+
+//admin eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJuYW1lIjoiQWRtaW4gVXNlciIsImVtYWlsIjoiYWRtaW5AbWFpbC5ydSIsInN0YXR1cyI6ImFkbWluIiwiZXhwIjoxNzYxNzIzNTYyfQ.nFcc91wyykCeSer1lnF4UskZ7zwLcCON4xDC9AhM3hg
+//user eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJuYW1lIjoiUmVndWxhciBVc2VyIiwiZW1haWwiOiJ1c2VyQG1haWwucnUiLCJzdGF0dXMiOiJ1c2VyIiwiZXhwIjoxNzYxNzI2MTM5fQ.B2r7AkqkwPtfQdCworjsOkqcqN83Qf4kAERO-vgUCR4
